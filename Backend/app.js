@@ -1,8 +1,11 @@
 const express = require('express');
 const mongoose = require('mongoose')
 const router = require ("./routes/user.routes")
+const cookieParser = require('cookie-parser')
 const app = express()
-app.use(express.json())
+
+app.use(express.json());
+app.use(cookieParser());
 app.use('/api',router)
 mongoose.connect("mongodb+srv://admin:pmF33eDtKhCnqVO9@cluster0.jpzmy.mongodb.net/work?retryWrites=true&w=majority").then(()=>{
     app.listen(5000)

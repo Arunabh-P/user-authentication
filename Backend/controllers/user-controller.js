@@ -42,15 +42,23 @@ const login = async (req,res,next) => {
         return res.status(400).json({message:'Invalid Email / Password'})
     }
     const token =  jwt.sign({id:existingUser._id},JWT_SECRET_KEY,{
-        expiresIn:"1hr"
+        expiresIn:"30s"
     })
+    res.cookie(String(existingUser._id),token,{
+        path:'/',
+        expires:new Date(Date.now()+1000*30),
+        httpOnly:true,
+        sameSite:'lax'
+    });
 
     return res.status(200)
     .json({message:'Successfully LoggedIn',user:existingUser,token})
 }
 const verifyToken = (req,res,next)=>{
-   const headers = req.headers[`authorization`];
-   const token = headers.split(" ")[1];
+    const cookies = req.headers.cookie;
+    const token = cookies.split("=")[1];
+    console.log(token);
+
    if(!token){
        res.status(404).json({message:'No token found!'})
    }
@@ -59,8 +67,24 @@ const verifyToken = (req,res,next)=>{
            return res.status(400).json({message:'Invalid Token!'})
        }
        console.log(user.id);
+       req.id = user.id;
    })
+   next();
 }
+const getUser = async (req,res,next) =>{
+    const userId = req.id;
+    let user;
+    try{
+        user = await User.findById(userId,"-password") //to remove password field and send all of the data of user
+    }catch(err){
+        return new Error(err);
+    }
+    if(!user){
+        return res.status(404).json({message:'User not found'});
+    }
+    return res.status(200).json({user});
+};
 exports.signup = signup;
 exports.login = login;
-exports.verifyToken = verifyToken
+exports.verifyToken = verifyToken;
+exports.getUser = getUser;
